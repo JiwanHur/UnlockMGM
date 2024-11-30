@@ -1,0 +1,140 @@
+wandb:
+    entity: "siit-maskgm"
+
+experiment:
+    project: "git_muse"
+    name: "ft_256_toast_cls_b256_corr"
+    output_dir: "results_corr/ft_256_toast_cls_b256_corr"
+    max_train_examples: 1281167 # total number of imagenet examples
+    max_eval_examples: 12800
+    save_every: 10000 # 5000
+    eval_every: 2000 # 1000
+    generate_every: 2000 # 1000
+    log_every: 50
+    log_grad_norm_every: 100
+    resume_from_checkpoint: False
+    resume_lr_scheduler: True
+    fine_tune_path: './scripts/maskgit_imagenet256_torch'
+
+model:
+    vq_model:
+        type: "maskgit_vqgan"
+        pretrained: "./scripts/tokenizer_imagenet256_torch"
+
+    transformer:
+        vocab_size: 2025 # (1024 + 1000 + 1 = 2025 -> Vq + Imagenet + <mask>)
+        max_position_embeddings: 257 # (256 + 1 for class id)
+        hidden_size: 768
+        num_hidden_layers: 24
+        num_attention_heads: 16
+        intermediate_size: 3072
+        codebook_size: 1024
+        num_vq_tokens: 256
+        num_classes: 1000
+        initializer_range: 0.02
+        norm_type: "layernorm"
+        layer_norm_eps: 1e-12
+        layer_norm_embeddings: True
+        use_normformer: False
+        use_encoder_layernorm: False
+        use_mlm_layer: True
+        use_mlm_layernorm: True
+        use_maskgit_mlp: True
+        use_bias: True
+        hidden_dropout: 0.1
+        attention_dropout: 0.1
+        use_embed_fusion: False
+    
+    fine_tune:
+        # use_prompt_token: False # | False | simple | token_generator | late_prompt |
+        # num_prompt_token: 1
+        tg_factor: 16 # token generator factor
+        # prompt_init: 'image_token' # | trunc_norm | mask_token | image_token |
+        # use_shallow_cpe: False # | False | dense | sparse |
+        # use_deep_cpe: False # | False | dense | sparse |
+        # cpe_init: 'zero' # | zero | trunc_norm |
+        # shallow_cpe_len: 6
+        # deep_cpe_len: 5
+        # deep_layer_index: 18 # 13 + 5 (=deep_cpe_len)
+        # use_bitfit: False
+        # use_ln: False
+        # use_aux_loss: False
+        # use_token_generator: False
+        # use_cpe: False
+        # aux_loss_weight: 0.00
+        # use_ttur: False
+        # use_pe: False
+        # ttur_lr_scalefactor: 10
+        use_toast: True
+        # use_cls_hidden: False
+        train_head: False
+        use_blank_second: True
+        predict_all: False
+        lambda_var: 0.1
+
+    gradient_checkpointing: True
+    enable_xformers_memory_efficient_attention: True
+
+
+dataset:
+    params:
+        train_shards_path_or_url: "/mnt/sdb/imagenet_shards/shards/imagenet-train-{000000..000320}.tar"
+        eval_shards_path_or_url: "/mnt/sdb/imagenet_shards/shards/imagenet-val-{000000..000012}.tar"
+        batch_size: ${training.batch_size}
+        shuffle_buffer_size: 1000
+        num_workers: 32
+        resolution: 256
+        pin_memory: True
+        persistent_workers: True
+    preprocessing:
+        resolution: 256
+        center_crop: False
+        random_flip: False
+        random_resize_and_crop: False
+
+
+optimizer:
+    name: fused_adam
+    params: # default adamw params
+        learning_rate: 1e-4
+        scale_lr: False # scale learning rate by total batch size
+        beta1: 0.9
+        beta2: 0.96
+        weight_decay: 0
+        epsilon: 1e-8
+
+
+lr_scheduler:
+    scheduler: "cosine_with_restarts"
+    params:
+        learning_rate: ${optimizer.params.learning_rate}
+        warmup_steps: 5000
+        num_cycles: 6
+
+
+training:
+    # freeze_cpe: False
+    gradient_accumulation_steps: 1
+    batch_size: 64 # per GPU
+    mixed_precision: "bf16"
+    enable_tf32: True
+    use_ema: True
+    ema_rate: 0.9999
+    ema_update_every: 1
+    seed: 208
+    max_train_steps: 50000 # 5000 approximates 1 epochs on 256 batch size
+    overfit_one_batch: False
+    min_masking_rate: 0.0
+    label_smoothing: 0.1
+    max_grad_norm: null
+    correction_loss_weight: 1.0
+    masking_type: "no_masking"
+    # related to vae code sampling
+    use_soft_code_target: False
+    use_stochastic_code: False
+    soft_code_temp: 1.0
+    use_generation_loss: False
+    use_correction_loss: True
+    use_dynamic_substitution: False
+    substitution_rate: 0.3
+

@@ -3,3 +3,7 @@ results_corr/
 muse.egg-info/
 build/
 README.md
+muse/__pycache__/
+training/__pycache__/
+scripts/tokenizer_imagenet*
+scripts/maskgit_imagenet*
