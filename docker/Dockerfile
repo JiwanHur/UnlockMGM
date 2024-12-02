@@ -22,18 +22,12 @@ SHELL ["/bin/bash", "-c"]
 # Activate the conda env and install torch + accelerate
 RUN source activate accelerate && \
     python3 -m pip install --no-cache-dir \
-    # torch==2.2.0 torchvision==0.17.0 torchaudio==2.2.0 \
     torch==1.13.0+cu116 torchvision==0.14.0+cu116 torchaudio==0.13.0 \
     --index-url https://download.pytorch.org/whl/cu116 
-    # python3 -m pip install --no-cache-dir accelerate 
-    # python3 -m pip install --no-cache-dir \
-    # git+https://github.com/huggingface/accelerate#egg=accelerate[testing,test_trackers] \
-    # --extra-index-url https://download.pytorch.org/whl/cu121
 
 RUN python3 -m pip install --no-cache-dir bitsandbytes
 
 # Stage 2
-# FROM nvidia/cuda:11.7.1-devel-ubuntu20.04 AS build-image
 FROM nvidia/cuda:11.6.1-cudnn8-devel-ubuntu20.04 AS build-image
 COPY --from=compile-image /opt/conda /opt/conda
 ENV PATH /opt/conda/bin:$PATH
