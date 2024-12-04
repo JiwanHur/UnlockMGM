@@ -26,7 +26,7 @@ cd /UnlockMGM
 pip install -e ".[extra]"
 ```
 
-Depending on your settings, [apex](https://github.com/NVIDIA/apex) could not be installed successfully. Please carefully check the CUDA version for the Dockerfile or you can fine-tune without fused_adam optimizer.
+Depending on your settings, [apex](https://github.com/NVIDIA/apex) could not be installed successfully. Please carefully check the CUDA version for the Dockerfile or you can fine-tune without fused_adam optimizer. You can skip installing Apex for the sampling only.
 
 ### Prepare Dataset
 Please refer to [open-muse](https://github.com/huggingface/open-muse) to prepare `webdataset` for ImageNet.
@@ -44,7 +44,7 @@ Please refer to [open-muse](https://github.com/huggingface/open-muse) to prepare
   ```
   
 3. **Adjust Resolution**  
-  Update the `resolution` parameter in the converted files to support both 256x256 and 512x512 resolutions as required.
+  Update the `resolution` parameter in the converting files to convert 256x256 and 512x512 resolutions, respectively.
 
 ## Fine-tuning TOAST
 For ImageNet256,
